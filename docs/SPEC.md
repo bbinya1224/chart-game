@@ -66,25 +66,50 @@ amount: number;
 }
 \`\`\`
 
-## 5. 폴더 구조 (FSD)
+## 5. 폴더 구조 (FSD + Next.js App Router)
 
 \`\`\`
 src/
-├── app/
-├── shared/
-│ ├── types/gameTypes.ts
-│ ├── hooks/useGameStore.ts
-│ └── ui/ChartCanvas.tsx
-├── features/
-│ ├── game/
-│ │ ├── model/gameSlice.ts
-│ │ ├── ui/GameBoard.tsx
-│ │ └── ui/ActionButtons.tsx
-│ └── result/
-│ └── ui/ResultScreen.tsx
-└── pages/
-├── game/page.tsx
-└── result/page.tsx
+├── app/ (Next.js App Router - 라우팅만 담당)
+│   ├── layout.tsx
+│   ├── page.tsx (홈)
+│   ├── game/
+│   │   └── page.tsx (게임 페이지 - GameBoard import)
+│   └── result/
+│       └── page.tsx (결과 페이지 - ResultScreen import)
+│
+├── widgets/ (페이지 수준 UI 블록)
+│   ├── game-board/
+│   │   ├── ui/
+│   │   │   └── GameBoard.tsx
+│   │   └── index.ts
+│   └── result-screen/
+│       ├── ui/
+│       │   └── ResultScreen.tsx
+│       └── index.ts
+│
+├── features/ (비즈니스 기능 단위)
+│   ├── trading/
+│   │   ├── ui/
+│   │   │   ├── ActionButtons.tsx
+│   │   │   └── StatusInfo.tsx
+│   │   └── index.ts
+│   └── chart/
+│       ├── ui/
+│       │   └── ChartCanvas.tsx
+│       └── index.ts
+│
+└── shared/ (공통 코드)
+    ├── atoms/ (Jotai 상태 관리)
+    │   └── gameAtom.ts
+    ├── hooks/
+    │   └── useGameStore.ts
+    ├── types/
+    │   └── gameTypes.ts
+    ├── data/
+    │   └── candleData.ts
+    └── ui/ (공통 UI 컴포넌트)
+        └── Button.tsx
 \`\`\`
 
 ## 6. 게임 데이터 & 로직
