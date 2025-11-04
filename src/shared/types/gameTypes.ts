@@ -48,4 +48,5 @@ export const GAME_CONSTANTS = {
   INITIAL_CASH: 10_000_000,
   MAX_TURNS: 50,
   SHARES_PER_TRADE: 100,
+  PAST_CANDLES: 30, // 게임 시작 전 과거 차트 개수
 } as const;

@@ -17,10 +17,11 @@ const baseGameStateAtom = atom({
 
 /**
  * 현재 가격 계산 (읽기 전용)
+ * 인덱스 = PAST_CANDLES + currentTurn - 1
  */
 export const currentPriceAtom = atom((get) => {
   const { currentTurn } = get(baseGameStateAtom);
-  const turnIndex = currentTurn - 1;
+  const turnIndex = GAME_CONSTANTS.PAST_CANDLES + currentTurn - 1;
   return candleData[turnIndex]?.close ?? 0;
 });
 
@@ -169,20 +170,30 @@ export const sellSharesAtom = atom(null, (get, set) => {
 
 /**
  * 다음 턴 액션 atom
+ * 턴 50에서 "다음" 클릭 시 자동 매도 후 게임 종료
  */
 export const nextTurnAtom = atom(null, (get, set) => {
   const state = get(baseGameStateAtom);
 
-  if (state.currentTurn >= GAME_CONSTANTS.MAX_TURNS) {
-    console.warn("게임 종료: 마지막 턴입니다");
+  if (state.currentTurn > GAME_CONSTANTS.MAX_TURNS) {
+    console.warn("게임 종료: 이미 게임이 끝났습니다");
     return;
   }
 
-  // 턴 50에서 자동 매도
-  if (state.currentTurn === GAME_CONSTANTS.MAX_TURNS && state.shares > 0) {
-    set(sellSharesAtom);
+  // 턴 50에서 자동 매도 후 게임 종료
+  if (state.currentTurn === GAME_CONSTANTS.MAX_TURNS) {
+    if (state.shares > 0) {
+      set(sellSharesAtom);
+    }
+    // 턴을 51로 증가시켜 isGameOver = true 되도록
+    set(baseGameStateAtom, {
+      ...get(baseGameStateAtom), // sellSharesAtom 이후 상태 반영
+      currentTurn: state.currentTurn + 1,
+    });
+    return;
   }
 
+  // 일반 턴 증가
   set(baseGameStateAtom, {
     ...state,
     currentTurn: state.currentTurn + 1,
@@ -210,8 +221,9 @@ export const candleDataAtom = atom(() => candleData);
 
 /**
  * 현재 턴까지의 차트 데이터 (읽기 전용)
+ * 과거 캔들 + 현재 턴까지 모두 표시
  */
 export const visibleCandleDataAtom = atom((get) => {
   const { currentTurn } = get(baseGameStateAtom);
-  return candleData.slice(0, currentTurn);
+  return candleData.slice(0, GAME_CONSTANTS.PAST_CANDLES + currentTurn);
 });

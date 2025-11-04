@@ -22,13 +22,13 @@ export const ActionButtons = () => {
   const requiredCash = currentPrice * GAME_CONSTANTS.SHARES_PER_TRADE;
 
   return (
-    <div className="flex gap-4">
+    <div className="bg-gray-800 rounded-lg p-6 space-y-3">
       {/* 매수 버튼 */}
       <button
         onClick={buyShares}
         disabled={!canBuy}
         className={`
-          flex-1 px-6 py-4 rounded-lg font-semibold text-lg transition-all
+          w-full px-6 py-4 rounded-lg font-semibold text-lg transition-all
           ${
             canBuy
               ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
@@ -41,7 +41,7 @@ export const ActionButtons = () => {
             : "자금 부족"
         }
       >
-        매수
+        💰 매수
         <div className="text-sm font-normal mt-1">
           {GAME_CONSTANTS.SHARES_PER_TRADE}주 / {requiredCash.toLocaleString()}원
         </div>
@@ -52,7 +52,7 @@ export const ActionButtons = () => {
         onClick={sellShares}
         disabled={!canSell}
         className={`
-          flex-1 px-6 py-4 rounded-lg font-semibold text-lg transition-all
+          w-full px-6 py-4 rounded-lg font-semibold text-lg transition-all
           ${
             canSell
               ? "bg-red-600 hover:bg-red-700 text-white cursor-pointer"
@@ -61,16 +61,16 @@ export const ActionButtons = () => {
         `}
         title={canSell ? "보유 주식 전량 매도" : "보유 주식 없음"}
       >
-        매도
+        💵 매도
         <div className="text-sm font-normal mt-1">전량 매도</div>
       </button>
 
       {/* 다음 버튼 */}
       <button
         onClick={nextTurn}
-        className="flex-1 px-6 py-4 rounded-lg font-semibold text-lg bg-green-600 hover:bg-green-700 text-white transition-all"
+        className="w-full px-6 py-4 rounded-lg font-semibold text-lg bg-green-600 hover:bg-green-700 text-white transition-all"
       >
-        {isLastTurn ? "게임 종료" : "다음"}
+        {isLastTurn ? "🎮 게임 종료" : "▶️ 다음"}
         <div className="text-sm font-normal mt-1">
           {isLastTurn ? "결과 확인" : "다음 턴"}
         </div>

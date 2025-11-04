@@ -1,332 +1,683 @@
-# 차트 매매 게임 명세서
+# 차트 매매 게임 명세서 (v2.0)
 
-## 1. 개요
+## 1. 프로젝트 개요
 
-- **총 50턴** 게임
-- **초기자산**: 10,000,000원
-- **핵심 메커닉**: 차트 확인 후 매수/매도 결정
+실제 주식/코인 트레이딩과 유사한 환경에서 차트 분석 능력을 훈련할 수 있는 시뮬레이션 게임입니다.
+
+### 핵심 정보
+- **총 턴수**: 50턴
+- **초기 자산**: 10,000,000원
+- **거래 단위**: 100주
+- **게임 목표**: 차트 분석을 통한 최대 수익률 달성
+
+### 기술 스택
+- **프레임워크**: Next.js 15 (App Router)
+- **언어**: TypeScript (strict mode)
+- **상태 관리**: Jotai
+- **스타일링**: Tailwind CSS
+- **아키텍처**: FSD (Feature-Sliced Design)
+
+---
 
 ## 2. 게임 플로우
 
-- 턴 1~49: 차트 확인 → 매수/매도 선택 → "다음" 클릭
-- 턴 50: 최종 보유 주식 자동 매도 → 결과 화면
+```mermaid
+graph TD
+    A[게임 시작] --> B[턴 1: 과거 30개 + 현재 1개 캔들 표시]
+    B --> C{매수/매도/다음 선택}
+    C -->|매수| D[100주 매수, 평단가 계산]
+    C -->|매도| E[전량 매도, 실현손익 계산]
+    C -->|다음| F{턴 < 50?}
+    D --> F
+    E --> F
+    F -->|Yes| G[다음 턴 차트 추가 표시]
+    G --> C
+    F -->|No, 턴=50| H[보유 주식 자동 매도]
+    H --> I[결과 모달 표시]
+    I --> J{다시 하기?}
+    J -->|Yes| A
+    J -->|No| K[홈으로]
+```
 
-## 3. 주요 기능
+---
 
-### Feature 1: 게임 상태 관리
+## 3. 고급 차트 분석 기능 ⭐
 
-- 현재 턴 (1~50)
-- 보유 자산 (현금)
-- 보유 주식 수
-- 진입가격 (평단가)
-- 거래 이력
+### 3.1 캔들스틱 차트
+- **데이터**: 80개 캔들 (과거 30개 + 게임 50개)
+- **표시**: 시가/고가/저가/종가
+- **색상**: 상승(초록), 하락(빨강)
+- **범위**: 10,000 ~ 15,000원
 
-### Feature 2: 차트 컴포넌트
+### 3.2 이동평균선 (MA)
+```typescript
+MA5 (노란색)  // 5일 이동평균 - 단기 추세
+MA20 (보라색) // 20일 이동평균 - 중기 추세
 
-- 과거 50개 캔들 데이터 표시
-- 현재 턴 기준 봉우리까지만 표시
-- 가격 범위 자동 조정
+// 매매 신호
+골든크로스: MA5 ↗ MA20 → 매수 신호
+데드크로스: MA5 ↘ MA20 → 매도 신호
+```
 
-### Feature 3: 액션 버튼
+### 3.3 거래량 (Volume)
+- 차트 중간에 막대 그래프
+- 상승 캔들: 연두색 반투명
+- 하락 캔들: 빨간색 반투명
+- 거래량 많음 = 신호 신뢰도 ↑
 
-- "매수": 현재가 기준 100주 매수 (보유 자산 검증)
-- "매도": 현재 보유주식 전량 매도
-- "다음": 턴 증가
+### 3.4 RSI 지표 (14일)
+```
+RSI > 70  → 과매수 (매도 고려)
+RSI < 30  → 과매도 (매수 고려)
+RSI ≈ 50  → 중립
+```
 
-### Feature 4: 손익 표시
+### 3.5 마우스 호버 툴팁
+마우스를 캔들에 올리면 상세 정보 표시:
+- 턴 번호
+- 시가/고가/저가/종가
+- 거래량
+- MA5, MA20 값
+- RSI 값 (색상으로 과매수/과매도 표시)
 
-- 보유주식 평가손익
-- 실현손익 (이전 거래)
-- 총 자산 = 현금 + 보유주식평가액
-
-### Feature 5: 결과 화면
-
-- 최종 자산
-- 수익률
-- 거래 이력 표시
+---
 
 ## 4. 데이터 모델
 
-\`\`\`typescript
-type GameState = {
-currentTurn: number;
-cash: number;
-shares: number;
-entryPrice: number;
-trades: Trade[];
-currentPrice: number;
-}
+### 4.1 타입 정의
 
+```typescript
+// 캔들 데이터
+type Candle = {
+  open: number;    // 시가
+  high: number;    // 고가
+  low: number;     // 저가
+  close: number;   // 종가
+  volume: number;  // 거래량
+};
+
+// 거래 이력
 type Trade = {
-turn: number;
-type: 'buy' | 'sell';
-price: number;
-shares: number;
-amount: number;
-}
-\`\`\`
+  turn: number;          // 거래 턴
+  type: 'buy' | 'sell';  // 매수/매도
+  price: number;         // 체결가
+  shares: number;        // 주식 수
+  amount: number;        // 거래 금액
+};
+
+// 게임 상수
+const GAME_CONSTANTS = {
+  INITIAL_CASH: 10_000_000,  // 초기 자산
+  MAX_TURNS: 50,             // 최대 턴
+  SHARES_PER_TRADE: 100,     // 거래 단위
+  PAST_CANDLES: 30,          // 과거 차트 개수
+};
+```
+
+### 4.2 차트 데이터 구조
+
+```typescript
+// candleData.ts: 총 80개 캔들
+[
+  // 인덱스 0~29: 게임 시작 전 과거 차트 (30개)
+  // - 사용자가 추세를 분석할 수 있도록
+  // - 이동평균선/RSI 계산에 필요
+
+  // 인덱스 30~79: 게임 턴 데이터 (50개)
+  // - 턴 1 = 인덱스 30
+  // - 턴 50 = 인덱스 79
+]
+
+// 현재가 계산
+currentPrice = candleData[PAST_CANDLES + currentTurn - 1].close
+```
+
+---
 
 ## 5. 폴더 구조 (FSD + Next.js App Router)
 
-\`\`\`
-src/
-├── app/ (Next.js App Router - 라우팅만 담당)
-│   ├── layout.tsx
-│   ├── page.tsx (홈)
-│   ├── game/
-│   │   └── page.tsx (게임 페이지 - GameBoard import)
-│   └── result/
-│       └── page.tsx (결과 페이지 - ResultScreen import)
+```
+chart-game/
+├── src/
+│   ├── app/                      # Next.js App Router (라우팅)
+│   │   ├── layout.tsx           # 루트 레이아웃
+│   │   ├── page.tsx             # 홈 페이지
+│   │   ├── game/
+│   │   │   └── page.tsx         # 게임 페이지
+│   │   └── globals.css          # 글로벌 스타일 + 애니메이션
+│   │
+│   ├── widgets/                  # 페이지 수준 UI 블록
+│   │   ├── game-board/
+│   │   │   ├── ui/
+│   │   │   │   └── GameBoard.tsx        # 게임 화면 전체
+│   │   │   └── index.ts
+│   │   └── result-screen/
+│   │       ├── ui/
+│   │       │   └── ResultScreen.tsx     # 결과 모달
+│   │       └── index.ts
+│   │
+│   ├── features/                 # 비즈니스 기능
+│   │   ├── chart/
+│   │   │   ├── ui/
+│   │   │   │   └── ChartCanvas.tsx      # 고급 차트 (MA/Volume/RSI)
+│   │   │   └── index.ts
+│   │   └── trading/
+│   │       ├── ui/
+│   │       │   ├── StatusInfo.tsx       # 자산/손익 정보
+│   │       │   └── ActionButtons.tsx    # 매수/매도/다음 버튼
+│   │       └── index.ts
+│   │
+│   └── shared/                   # 공통 코드
+│       ├── atoms/
+│       │   └── gameAtom.ts              # Jotai 상태 관리
+│       ├── hooks/
+│       │   └── useGameStore.ts          # 게임 스토어 훅
+│       ├── types/
+│       │   └── gameTypes.ts             # 타입 정의
+│       ├── data/
+│       │   └── candleData.ts            # 80개 캔들 데이터
+│       ├── utils/
+│       │   └── indicators.ts            # MA/RSI/볼린저밴드 계산
+│       └── ui/
+│           ├── Modal.tsx                # 모달 컴포넌트
+│           └── index.ts
 │
-├── widgets/ (페이지 수준 UI 블록)
-│   ├── game-board/
-│   │   ├── ui/
-│   │   │   └── GameBoard.tsx
-│   │   └── index.ts
-│   └── result-screen/
-│       ├── ui/
-│       │   └── ResultScreen.tsx
-│       └── index.ts
-│
-├── features/ (비즈니스 기능 단위)
-│   ├── trading/
-│   │   ├── ui/
-│   │   │   ├── ActionButtons.tsx
-│   │   │   └── StatusInfo.tsx
-│   │   └── index.ts
-│   └── chart/
-│       ├── ui/
-│       │   └── ChartCanvas.tsx
-│       └── index.ts
-│
-└── shared/ (공통 코드)
-    ├── atoms/ (Jotai 상태 관리)
-    │   └── gameAtom.ts
-    ├── hooks/
-    │   └── useGameStore.ts
-    ├── types/
-    │   └── gameTypes.ts
-    ├── data/
-    │   └── candleData.ts
-    └── ui/ (공통 UI 컴포넌트)
-        └── Button.tsx
-\`\`\`
+├── docs/
+│   └── SPEC.md                   # 이 문서
+├── public/
+├── package.json
+├── tsconfig.json
+└── next.config.ts
+```
 
-## 6. 게임 데이터 & 로직
+---
 
-### 6.1 차트 데이터
+## 6. UI/UX 레이아웃
 
-- **데이터 소스**: 고정 배열 (50개 캔들)
-- **각 캔들 구조**:
+### 6.1 게임 화면 (2컬럼 레이아웃)
+
+```
+데스크톱 (≥1024px):
+┌─────────────────────────────────────────────┐
+│  턴: 15/50          현재가: 13,450원        │ ← 헤더
+├────────────────────────────┬────────────────┤
+│                            │ 💰 현금         │
+│                            │ 📈 보유 주식    │
+│        📊 차트 분석         │ 📊 평가손익     │
+│     (800x550px)            │ 💵 실현손익     │
+│  - MA5/MA20                │ 🎯 총 자산      │
+│  - 거래량                  ├────────────────┤
+│  - RSI                     │ 💰 매수         │
+│  - 호버 툴팁               │ 💵 매도         │
+│                            │ ▶️ 다음         │
+└────────────────────────────┴────────────────┘
+
+모바일 (< 1024px):
+┌──────────────┐
+│    헤더      │
+├──────────────┤
+│    차트      │
+├──────────────┤
+│  상태 정보   │
+├──────────────┤
+│  액션 버튼   │
+└──────────────┘
+```
+
+### 6.2 차트 영역 상세
+
+```
+┌──────────────────────────────────┐
+│ MA5 ━━  MA20 ━━                  │ ← 범례
+├──────────────────────────────────┤
+│         │                        │
+│  12,000 ├────╔══╗────            │
+│         │    ║  ║                │ ← 가격 차트
+│  11,000 ├────╚══╝────            │   (캔들스틱 + MA)
+│         │                        │
+├──────────────────────────────────┤
+│ Volume                           │
+│  ██ █ ██ █                       │ ← 거래량
+├──────────────────────────────────┤
+│ RSI (14)                         │
+│  70 ----  [과매수]               │
+│  50 ----  ━━━━━                  │ ← RSI 지표
+│  30 ----  [과매도]               │
+└──────────────────────────────────┘
+```
+
+### 6.3 상태 정보 (오른쪽 패널)
+
+```
+╔════════════════════════════╗
+║ 💰 현금: 9,500,000원        ║
+║ 📈 보유: 100주 @ 12,300원   ║
+║    평단가: 12,300원         ║
+║ 📊 평가손익: +115,000원     ║
+║            (+0.93%)         ║
+║ 💵 실현손익: -250,000원     ║
+║───────────────────────────║
+║ 🎯 총 자산: 10,365,000원    ║
+║    수익률: +3.65%          ║
+╚════════════════════════════╝
+```
+
+### 6.4 액션 버튼 (세로 배치)
+
+```
+╔════════════════════════════╗
+║ [  💰 매수               ] ║
+║    100주 / 1,250,000원     ║
+║                            ║
+║ [  💵 매도               ] ║
+║    전량 매도               ║
+║                            ║
+║ [  ▶️ 다음               ] ║
+║    다음 턴                 ║
+╚════════════════════════════╝
+```
+
+---
+
+## 7. 게임 로직 상세
+
+### 7.1 매수 로직
 
 ```typescript
-type Candle = {
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
+function buyShares() {
+  const cost = currentPrice * 100;
+
+  // 1. 자금 검증
+  if (cash < cost) {
+    return; // 버튼 비활성화됨
+  }
+
+  // 2. 평단가 계산
+  const totalShares = shares + 100;
+  const totalCost = (shares * entryPrice) + cost;
+  const newEntryPrice = totalCost / totalShares;
+
+  // 3. 상태 업데이트
+  cash -= cost;
+  shares = totalShares;
+  entryPrice = newEntryPrice;
+
+  // 4. 거래 기록
+  trades.push({
+    turn: currentTurn,
+    type: 'buy',
+    price: currentPrice,
+    shares: 100,
+    amount: cost
+  });
+}
+```
+
+### 7.2 매도 로직
+
+```typescript
+function sellShares() {
+  if (shares === 0) return;
+
+  const revenue = currentPrice * shares;
+  const profit = (currentPrice - entryPrice) * shares;
+
+  // 상태 업데이트
+  cash += revenue;
+  realizedProfit += profit;
+
+  // 거래 기록
+  trades.push({
+    turn: currentTurn,
+    type: 'sell',
+    price: currentPrice,
+    shares: shares,
+    amount: revenue
+  });
+
+  shares = 0;
+  entryPrice = 0;
+}
+```
+
+### 7.3 턴 진행 로직
+
+```typescript
+function nextTurn() {
+  // 턴 50: 자동 매도 후 게임 종료
+  if (currentTurn === 50) {
+    if (shares > 0) {
+      sellShares();
+    }
+    currentTurn = 51; // isGameOver = true
+    // → 결과 모달 표시
+    return;
+  }
+
+  // 일반 턴: 다음 턴으로
+  currentTurn++;
+}
+```
+
+### 7.4 손익 계산
+
+```typescript
+// 평가손익 (보유 중)
+unrealizedProfit = (currentPrice - entryPrice) * shares;
+unrealizedProfitRate = (currentPrice - entryPrice) / entryPrice * 100;
+
+// 총 자산
+totalAssets = cash + (currentPrice * shares);
+
+// 수익률
+profitRate = (totalAssets - INITIAL_CASH) / INITIAL_CASH * 100;
+```
+
+---
+
+## 8. 결과 화면 (모달)
+
+### 8.1 모달 디자인
+
+```
+┌────────────────────────────────┐
+│  ╔═══════════════════════════╗ │
+│  ║      🎮 게임 종료!         ║ │ ← 그라디언트 헤더
+│  ║   50턴이 모두 끝났습니다   ║ │   (파란→보라)
+│  ╚═══════════════════════════╝ │
+│  ┌───────────────────────────┐ │
+│  │ 💰 초기 자산: 10,000,000원 │ │
+│  │ 💎 최종 자산: 11,250,000원 │ │
+│  │ 💵 수익: +1,250,000원      │ │
+│  │                           │ │
+│  │ 📈 수익률: +12.5%         │ │ ← 초대형
+│  └───────────────────────────┘ │
+│  ┌───────────────────────────┐ │
+│  │ 📊 거래 이력               │ │
+│  │ ─────────────────────────│ │
+│  │ 턴 5:  [매수] 100주        │ │
+│  │ 턴 15: [매도] 100주        │ │
+│  │ ... (스크롤)              │ │
+│  └───────────────────────────┘ │
+│  [ 🔄 다시 하기 ] [ 🏠 홈으로 ] │
+└────────────────────────────────┘
+```
+
+### 8.2 모달 애니메이션
+
+```css
+/* 배경 페이드인 (0.2초) */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 모달 스케일인 (0.3초) */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+```
+
+### 8.3 반응형 모달
+
+```
+모바일: max-w-3xl (768px)
+높이: max-h-90vh (스크롤 가능)
+패딩: p-4 (16px)
+```
+
+---
+
+## 9. 상태 관리 (Jotai)
+
+### 9.1 Atom 구조
+
+```typescript
+// 기본 상태
+baseGameStateAtom = {
+  currentTurn: 1,
+  cash: 10_000_000,
+  shares: 0,
+  entryPrice: 0,
+  realizedProfit: 0,
+  trades: []
+}
+
+// 읽기 전용 Computed Atoms
+currentPriceAtom          // 현재가
+positionValueAtom         // 보유 주식 평가액
+unrealizedProfitAtom      // 평가손익
+totalAssetsAtom           // 총 자산
+profitRateAtom            // 수익률
+canBuyAtom                // 매수 가능 여부
+canSellAtom               // 매도 가능 여부
+visibleCandleDataAtom     // 현재 턴까지 표시할 캔들
+
+// 액션 Atoms
+buySharesAtom             // 매수
+sellSharesAtom            // 매도
+nextTurnAtom              // 다음 턴
+resetGameAtom             // 게임 리셋
+```
+
+### 9.2 커스텀 훅
+
+```typescript
+// useGameStore.ts
+export const useGameStore = () => {
+  // 모든 상태와 액션을 통합 제공
+  return {
+    // 상태
+    currentTurn, maxTurns, cash, shares, entryPrice,
+    currentPrice, totalAssets, profitRate,
+    unrealizedProfit, unrealizedProfitRate,
+    realizedProfit, trades,
+
+    // 플래그
+    canBuy, canSell, isGameOver, isLastTurn,
+
+    // 차트 데이터
+    visibleCandleData,
+
+    // 액션
+    buyShares, sellShares, nextTurn, resetGame
+  };
 };
 ```
 
-- **데이터 범위**: 10,000 ~ 15,000원 (변동성 있게)
-- **초기가(turnIndex=0)**: 12,500원
-- **현재가**: 현재 턴의 close 값
+---
 
-### 6.2 매수/매도 규칙
+## 10. 보조 지표 계산 로직
 
-| 상황      | 액션               | 규칙                                                   |
-| --------- | ------------------ | ------------------------------------------------------ |
-| 매수      | 100주 구매         | 필요자금 = 현재가 × 100. 보유 현금 부족 시 버튼 비활성 |
-| 매도      | 보유주식 전량 매도 | 보유주식 0이면 버튼 비활성                             |
-| 이미 보유 | 추가매수 가능      | 평단가 자동 업데이트                                   |
-| 턴 50     | 자동 매도          | 게임 끝나면서 현재 보유주식 전량 자동 매도             |
-
-### 6.3 손익 계산
-
-**평가손익** (보유 주식 있을 때):
-
-```
-평가손익 = (현재가 - 평단가) × 보유주식 수
-```
-
-**실현손익** (매도했을 때):
-
-```
-실현손익 = (매도가 - 매수평단가) × 매도량
-```
-
-**총 자산**:
-
-```
-총 자산 = 현금 + (현재가 × 보유주식 수) + 누적 실현손익
-```
-
-**수익률**:
-
-```
-수익률(%) = ((최종 자산 - 초기 자산) / 초기 자산) × 100
-```
-
-### 6.4 턴 진행
-
-| 턴   | 상태    | 동작                                         |
-| ---- | ------- | -------------------------------------------- |
-| 1    | 초기    | "다음" 클릭 가능, 첫 차트만 보임             |
-| 2~49 | 진행 중 | 매수/매도/다음 가능                          |
-| 50   | 최종    | "다음" 클릭 → 보유주식 자동 매도 → 결과 화면 |
-
-## 7. UI/UX 상세
-
-### 7.1 게임 화면 레이아웃
-
-```
-┌─────────────────────────────────────┐
-│ 턴: 15/50  |  현재가: 13,450원      │ ← 헤더
-├─────────────────────────────────────┤
-│                                     │
-│          [차트 컴포넌트]             │ ← 차트 (400x300)
-│       (과거~현재까지 캔들)           │
-│                                     │
-├─────────────────────────────────────┤
-│ 💰 현금: 9,500,000원                 │
-│ 📈 보유: 100주 @ 12,300원 (평단가)  │ ← 상태 정보
-│ 📊 평가손익: +115,000원 (+0.84%)    │
-├─────────────────────────────────────┤
-│ [매수] [매도] [다음]                  │ ← 액션 버튼
-└─────────────────────────────────────┘
-```
-
-### 7.2 헤더 정보
-
-- 좌측: "턴: X/50"
-- 중앙: "현재가: XX,XXX원"
-- 우측: 실시간 총 자산 + 수익률
-
-### 7.3 상태 정보 표시
-
-```
-💰 현금: 9,500,000원
-📈 보유: 100주 @ 12,300원 (평단가)
-📊 평가손익: +115,000원 (+0.84%)
-   실현손익: -250,000원
-━━━━━━━━━━━━━━━━━━━━━━
-🎯 총 자산: 10,365,000원 (+3.65%)
-```
-
-### 7.4 버튼 상태
+### 10.1 이동평균선 (MA)
 
 ```typescript
-// 매수 버튼
-- 활성: 보유 현금 >= (현재가 × 100)
-- 비활성: 현금 부족 시 → "자금 부족" 툴팁
+function calculateMA(candles: Candle[], period: number) {
+  const ma: (number | null)[] = [];
 
-// 매도 버튼
-- 활성: 보유주식 > 0
-- 비활성: 보유주식 = 0 → "매도할 주식 없음" 툴팁
+  for (let i = 0; i < candles.length; i++) {
+    if (i < period - 1) {
+      ma.push(null); // 데이터 부족
+      continue;
+    }
 
-// 다음 버튼
-- 턴 1~49: 항상 활성
-- 턴 50: "게임 종료" 텍스트로 변경
+    let sum = 0;
+    for (let j = 0; j < period; j++) {
+      sum += candles[i - j].close;
+    }
+    ma.push(sum / period);
+  }
+
+  return ma;
+}
 ```
 
-## 8. 결과 화면
-
-```
-┌─────────────────────────────────┐
-│   🎮 게임 종료!                  │
-├─────────────────────────────────┤
-│ 초기 자산:     10,000,000원      │
-│ 최종 자산:     11,250,000원      │
-│ 수익:           +1,250,000원     │
-│ 수익률:             +12.5%       │
-├─────────────────────────────────┤
-│ 📊 거래 이력                      │
-│ ─────────────────────────────── │
-│ 턴 5:  매수 100주 @ 12,500원     │
-│ 턴 15: 매도 50주  @ 13,200원     │
-│ 턴 23: 매수 100주 @ 12,800원     │
-│ ...                             │
-├─────────────────────────────────┤
-│ [다시 하기] [홈으로]              │
-└─────────────────────────────────┘
-```
-
-## 9. 엣지 케이스 & 에러 처리
-
-| 상황              | 처리 방법                                  |
-| ----------------- | ------------------------------------------ |
-| 자금 부족         | 매수 버튼 비활성 + "자금 부족" 메시지      |
-| 매도할 주식 없음  | 매도 버튼 비활성 + "보유 주식 없음" 메시지 |
-| 마지막 턴에 매수  | 허용 (턴 50에서 자동 매도됨)               |
-| 거래 없이 50턴 끝 | 초기 자산과 동일 자산으로 종료             |
-
-## 10. 상태 관리 상세
+### 10.2 RSI (14일)
 
 ```typescript
-type GameStore = {
-  // 기본 정보
-  currentTurn: number;
-  maxTurns: number;
-  initialCash: number;
-  candleData: Candle[];
+function calculateRSI(candles: Candle[], period = 14) {
+  const rsi: (number | null)[] = [];
 
-  // 현재 포지션
-  cash: number;
-  shares: number;
-  entryPrice: number;
+  // 가격 변화 계산
+  const changes = [];
+  for (let i = 1; i < candles.length; i++) {
+    changes.push(candles[i].close - candles[i-1].close);
+  }
 
-  // 손익
-  realizedProfit: number; // 실현손익 누적
+  // RSI 계산
+  for (let i = 0; i < candles.length; i++) {
+    if (i < period) {
+      rsi.push(null);
+      continue;
+    }
 
-  // 거래 이력
-  trades: Trade[];
+    let gains = 0, losses = 0;
+    for (let j = 0; j < period; j++) {
+      const change = changes[i - period + j];
+      if (change > 0) gains += change;
+      else losses += Math.abs(change);
+    }
 
-  // Actions
-  buyShares: () => void;
-  sellShares: () => void;
-  nextTurn: () => void;
-  resetGame: () => void;
+    const avgGain = gains / period;
+    const avgLoss = losses / period;
+    const rs = avgGain / avgLoss;
 
-  // Computed
-  getCurrentPrice: () => number;
-  getPositionValue: () => number;
-  getTotalAssets: () => number;
-  getProfitRate: () => number;
-};
+    rsi.push(100 - (100 / (1 + rs)));
+  }
+
+  return rsi;
+}
 ```
 
-## 11. 개발 체크리스트
+---
 
-```markdown
-### Phase 1: 초기화
+## 11. 반응형 디자인
 
-- [ ] 프로젝트 폴더 구조 생성
-- [ ] 의존성 설치 (zustand 등)
-- [ ] tsconfig, eslint 설정
+### 11.1 브레이크포인트
 
-### Phase 2: 코어 로직
-
-- [ ] types/gameTypes.ts 작성
-- [ ] hooks/useGameStore.ts 구현
-- [ ] 샘플 차트 데이터 생성
-
-### Phase 3: UI 컴포넌트
-
-- [ ] ChartCanvas 컴포넌트
-- [ ] StatusInfo 컴포넌트 (자산, 손익)
-- [ ] ActionButtons 컴포넌트
-- [ ] GameBoard (통합)
-
-### Phase 4: 페이지
-
-- [ ] /game 페이지
-- [ ] /result 페이지
-- [ ] 네비게이션
-
-### Phase 5: 마무리
-
-- [ ] 반응형 디자인 확인
-- [ ] 엣지 케이스 테스트
-- [ ] 성능 최적화
+```css
+/* Tailwind 기본 */
+sm:  640px  /* 스마트폰 가로 */
+md:  768px  /* 태블릿 */
+lg:  1024px /* 데스크톱 */
+xl:  1280px /* 와이드 */
 ```
+
+### 11.2 레이아웃 변화
+
+```typescript
+// 게임 화면
+< 1024px: grid-cols-1      // 세로 배치
+≥ 1024px: grid-cols-[1fr_400px]  // 차트 | 사이드바
+
+// 헤더
+< 640px: flex-col          // 세로
+≥ 640px: flex-row          // 가로
+
+// 차트 크기
+모바일: 가로 스크롤 가능
+데스크톱: 800x550px
+```
+
+---
+
+## 12. 엣지 케이스 & 에러 처리
+
+| 상황 | 처리 방법 |
+|------|-----------|
+| 자금 부족 | 매수 버튼 비활성화 + "자금 부족" 툴팁 |
+| 보유 주식 없음 | 매도 버튼 비활성화 + "보유 주식 없음" 툴팁 |
+| 턴 50에서 매수 | 허용 (자동 매도됨) |
+| 거래 없이 게임 종료 | 초기 자산 그대로 (수익률 0%) |
+| 모달 외부 클릭 | 닫히지 않음 (closeOnBackdrop=false) |
+
+---
+
+## 13. 개발 완료 체크리스트
+
+### ✅ Phase 1: 프로젝트 초기화
+- [x] Next.js 15 + TypeScript 설정
+- [x] Tailwind CSS 설정
+- [x] Jotai 설치
+- [x] FSD 폴더 구조 생성
+- [x] 절대 경로 설정 (`@/*`)
+
+### ✅ Phase 2: 데이터 & 타입
+- [x] `gameTypes.ts` - 타입 정의 및 상수
+- [x] `candleData.ts` - 80개 캔들 데이터 (과거 30 + 게임 50)
+- [x] `indicators.ts` - MA/RSI 계산 함수
+
+### ✅ Phase 3: 상태 관리
+- [x] `gameAtom.ts` - Jotai atoms (상태 + 액션)
+- [x] `useGameStore.ts` - 커스텀 훅
+
+### ✅ Phase 4: UI 컴포넌트
+- [x] `ChartCanvas.tsx` - 고급 차트 (MA/Volume/RSI/툴팁)
+- [x] `StatusInfo.tsx` - 자산/손익 정보
+- [x] `ActionButtons.tsx` - 매수/매도/다음 (세로 배치)
+- [x] `Modal.tsx` - 모달 컴포넌트
+
+### ✅ Phase 5: 위젯
+- [x] `GameBoard.tsx` - 2컬럼 레이아웃
+- [x] `ResultScreen.tsx` - 결과 모달
+
+### ✅ Phase 6: 페이지
+- [x] `app/page.tsx` - 홈 화면
+- [x] `app/game/page.tsx` - 게임 화면
+- [x] `app/layout.tsx` - 루트 레이아웃
+
+### ✅ Phase 7: 마무리
+- [x] 반응형 디자인 (모바일/데스크톱)
+- [x] 모달 애니메이션
+- [x] 턴 50 자동 매도 로직
+- [x] 과거 차트 데이터 표시
+
+---
+
+## 14. 향후 개선 가능 항목 (추후)
+
+### 기능 추가
+- [ ] 여러 난이도 (쉬움/보통/어려움)
+- [ ] 리더보드 (수익률 순위)
+- [ ] 실제 주식 데이터 가져오기 (API 연동)
+- [ ] 볼린저 밴드 표시 옵션
+- [ ] MACD 지표 추가
+- [ ] 분봉/일봉 전환
+- [ ] 여러 차트 시나리오 (랜덤 선택)
+
+### UX 개선
+- [ ] 사운드 효과 (매수/매도/게임 종료)
+- [ ] 성과 배지 시스템
+- [ ] 튜토리얼 모드
+- [ ] 차트 패턴 힌트 시스템
+
+### 기술 개선
+- [ ] 차트 성능 최적화 (WebGL)
+- [ ] PWA 적용 (오프라인 플레이)
+- [ ] 다크/라이트 모드 토글
+- [ ] 다국어 지원
+
+---
+
+## 15. 참고 자료
+
+### 프로젝트 구조
+- [FSD 공식 문서](https://feature-sliced.design/)
+- [Next.js App Router](https://nextjs.org/docs/app)
+
+### 기술 분석
+- [이동평균선 전략](https://www.investopedia.com/terms/m/movingaverage.asp)
+- [RSI 지표](https://www.investopedia.com/terms/r/rsi.asp)
+- [캔들스틱 차트](https://www.investopedia.com/trading/candlestick-charting-what-is-it/)
+
+---
+
+**마지막 업데이트**: 2025-11-04
+**버전**: 2.0 (고급 차트 기능 및 반응형 레이아웃 완성)
