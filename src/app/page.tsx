@@ -1,35 +1,54 @@
-import Link from "next/link";
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { DashboardHeader } from '@/widgets/DashboardHeader';
+import { TradeChart } from '@/widgets/TradeChart';
+import { TradeStats } from '@/widgets/TradeStats';
+import { GameResult } from '@/widgets/GameResult';
+import { useTradeSync } from '@/features/dashboard/useTradeSync';
+import { Button } from '@/shared/ui/Button';
 
 export default function Home() {
+  const { sync } = useTradeSync();
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-      <div className="text-center space-y-8 max-w-2xl px-8">
-        <h1 className="text-6xl font-bold">📈 차트 매매 게임</h1>
-
-        <p className="text-xl text-gray-400">
-          50턴 동안 차트를 보고 매수/매도하여
-          <br />
-          최고의 수익률을 달성하세요!
-        </p>
-
-        <div className="bg-gray-800 rounded-lg p-8 space-y-4 text-left">
-          <h2 className="text-2xl font-semibold text-center mb-6">게임 규칙</h2>
-          <ul className="space-y-3 text-gray-300">
-            <li>💰 초기 자산: 10,000,000원</li>
-            <li>🎮 총 50턴 진행</li>
-            <li>📊 매수: 100주 단위</li>
-            <li>💵 매도: 보유 주식 전량</li>
-            <li>🎯 목표: 최대 수익률 달성</li>
-          </ul>
+    <div className="min-h-screen bg-gray-950 text-gray-100 font-sans">
+      {/* Top Navigation Bar */}
+      <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-gray-950/80 backdrop-blur supports-[backdrop-filter]:bg-gray-950/60">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📊</span>
+            <span className="font-bold text-gray-100 tracking-tight">Quant Monitor</span>
+          </div>
+          
+          <Link href="/find-my-strategy">
+            <Button 
+              variant="primary" 
+              size="md"
+              className="bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-900/20 transition-all hover:scale-105"
+            >
+              <span className="mr-2">🎮</span>
+              나만의 투자 전략 알아보기
+            </Button>
+          </Link>
         </div>
+      </header>
 
-        <Link
-          href="/game"
-          className="inline-block px-12 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-2xl font-semibold transition-all"
-        >
-          게임 시작
-        </Link>
-      </div>
+      {/* Dashboard Content */}
+      <main className="mx-auto max-w-7xl p-6 space-y-6">
+        <DashboardHeader onSync={sync} />
+        
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <TradeChart />
+          </div>
+          <div className="space-y-6">
+            <TradeStats />
+            <GameResult />
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

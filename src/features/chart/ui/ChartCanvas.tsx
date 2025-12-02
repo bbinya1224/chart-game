@@ -10,6 +10,24 @@ type ChartCanvasProps = {
   height?: number;
 };
 
+type ChartMetadata = {
+  candleData: Candle[];
+  ma5: (number | null)[];
+  ma20: (number | null)[];
+  rsi: (number | null)[];
+  chartLeft: number;
+  chartRight: number;
+  mainChartTop: number;
+  mainChartBottom: number;
+  candleWidth: number;
+  candleGap: number;
+  priceToY: (price: number) => number;
+};
+
+type ChartCanvasElement = HTMLCanvasElement & {
+  _chartData?: ChartMetadata;
+};
+
 type TooltipData = {
   x: number;
   y: number;
@@ -283,7 +301,8 @@ export const ChartCanvas = ({
     ctx.fillRect(chartLeft + 105, mainChartTop - 27, 20, 3);
 
     // 마우스 이벤트를 위한 데이터 저장
-    (canvas as any)._chartData = {
+    const typedCanvas = canvas as ChartCanvasElement;
+    typedCanvas._chartData = {
       candleData,
       ma5,
       ma20,
@@ -300,14 +319,14 @@ export const ChartCanvas = ({
 
   // 마우스 이벤트 핸들러
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
+    const canvas = canvasRef.current as ChartCanvasElement | null;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    const chartData = (canvas as any)._chartData;
+    const chartData = canvas._chartData;
     if (!chartData) return;
 
     const {

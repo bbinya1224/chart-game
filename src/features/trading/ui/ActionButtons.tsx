@@ -59,10 +59,10 @@ export const ActionButtons = () => {
               : "bg-gray-700 text-gray-500 cursor-not-allowed"
           }
         `}
-        title={canSell ? "보유 주식 전량 매도" : "보유 주식 없음"}
+        title={canSell ? "1주 매도" : "보유 주식 없음"}
       >
         💵 매도
-        <div className="text-sm font-normal mt-1">전량 매도</div>
+        <div className="text-sm font-normal mt-1">1주 매도</div>
       </button>
 
       {/* 다음 버튼 */}

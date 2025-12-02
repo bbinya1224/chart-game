@@ -1,5 +1,5 @@
 import { ResultScreen } from "@/widgets/result-screen";
 
 export default function ResultPage() {
-  return <ResultScreen />;
+  return <ResultScreen isOpen={true} />;
 }

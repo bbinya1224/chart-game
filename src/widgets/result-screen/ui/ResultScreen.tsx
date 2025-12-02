@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/shared/hooks/useGameStore";
 import { Modal } from "@/shared/ui/Modal";
+import { GameResult } from "@/widgets/GameResult";
 
 type ResultScreenProps = {
   isOpen: boolean;
@@ -92,6 +93,9 @@ export const ResultScreen = ({ isOpen, onClose }: ResultScreenProps) => {
               </span>
             </div>
           </div>
+
+          {/* 투자 성향 분석 */}
+          <GameResult trades={trades} />
 
           {/* 거래 이력 */}
           <div className="bg-gray-800 rounded-xl p-4 sm:p-6 border-2 border-gray-700">

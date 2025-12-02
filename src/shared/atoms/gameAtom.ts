@@ -1,4 +1,4 @@
-import { atom } from "jotai";
+import { atom, type PrimitiveAtom } from "jotai";
 import type { Trade } from "@/shared/types/gameTypes";
 import { GAME_CONSTANTS } from "@/shared/types/gameTypes";
 import { candleData } from "@/shared/data/candleData";
@@ -8,7 +8,7 @@ import { candleData } from "@/shared/data/candleData";
  */
 const baseGameStateAtom = atom({
   currentTurn: 1,
-  cash: GAME_CONSTANTS.INITIAL_CASH,
+  cash: GAME_CONSTANTS.INITIAL_CASH as number,
   shares: 0,
   entryPrice: 0,
   realizedProfit: 0,
@@ -85,7 +85,7 @@ export const canSellAtom = atom((get) => {
  */
 export const gameStateAtom = atom(
   (get) => get(baseGameStateAtom),
-  (get, set, update: Partial<typeof baseGameStateAtom extends atom<infer T> ? T : never>) => {
+  (get, set, update: Partial<typeof baseGameStateAtom extends PrimitiveAtom<infer T> ? T : never>) => {
     const current = get(baseGameStateAtom);
     set(baseGameStateAtom, { ...current, ...update });
   }
@@ -143,10 +143,10 @@ export const sellSharesAtom = atom(null, (get, set) => {
     return;
   }
 
-  const sharesToSell = state.shares;
+  const sharesToSell = 1; // 1주 매도
   const revenue = currentPrice * sharesToSell;
 
-  // 실현손익 계산
+  // 실현손익 계산 (평단가 기준)
   const profit = (currentPrice - state.entryPrice) * sharesToSell;
 
   // 거래 기록 추가
@@ -158,11 +158,15 @@ export const sellSharesAtom = atom(null, (get, set) => {
     amount: revenue,
   };
 
+  const remainingShares = state.shares - sharesToSell;
+  // 전량 매도시 평단가 초기화, 아니면 유지
+  const newEntryPrice = remainingShares === 0 ? 0 : state.entryPrice;
+
   set(baseGameStateAtom, {
     ...state,
     cash: state.cash + revenue,
-    shares: 0,
-    entryPrice: 0,
+    shares: remainingShares,
+    entryPrice: newEntryPrice,
     realizedProfit: state.realizedProfit + profit,
     trades: [...state.trades, newTrade],
   });

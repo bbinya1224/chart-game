@@ -11,7 +11,6 @@ export const StatusInfo = () => {
     cash,
     shares,
     entryPrice,
-    currentPrice,
     unrealizedProfit,
     unrealizedProfitRate,
     realizedProfit,
