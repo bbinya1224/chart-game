@@ -28,6 +28,7 @@ export const generateCandles = (count: number, startPrice: number): Candle[] => 
       high,
       low,
       close,
+      volume: Math.floor(Math.random() * 10000) + 1000,
     });
 
     currentPrice = close;

@@ -12,8 +12,13 @@ export const GameResult: React.FC<GameResultProps> = ({ trades: externalTrades }
   
   // Use external trades if provided, otherwise use store trades
   const tradesToAnalyze = useMemo(() => {
-    if (externalTrades) {
-      // Adapt game trades to the format expected by analyzeTrades
+    if (externalTrades && externalTrades.length > 0) {
+      // Check if it's already in the correct format (has timestamp)
+      if ('timestamp' in externalTrades[0]) {
+        return externalTrades;
+      }
+
+      // Adapt legacy game trades (with turn) to the format expected by analyzeTrades
       return externalTrades.map((t, i) => ({
         id: `game-${i}`,
         timestamp: new Date(Date.now() - (1000 * 60 * (50 - t.turn))).toISOString(), // Mock timestamp based on turn

@@ -8,6 +8,7 @@ export interface Candle {
   high: number;
   low: number;
   close: number;
+  volume: number;
 }
 
 export interface TradeLog {
@@ -37,6 +38,7 @@ export interface GameState {
   // Game Status
   isPlaying: boolean;
   isGameOver: boolean;
+  realizedProfit: number;
   gameSpeed: number; // ms per tick
   
   // Actions
@@ -67,6 +69,7 @@ export const useGameStore = create<GameState>()(
     tradeHistory: [],
     isPlaying: false,
     isGameOver: false,
+    realizedProfit: 0,
     gameSpeed: 1000,
 
     actions: {
@@ -118,13 +121,16 @@ export const useGameStore = create<GameState>()(
       },
 
       sell: (quantity: number) => {
-        const { wallet, candles, currentIndex, tradeHistory } = get();
+        const { wallet, candles, currentIndex, tradeHistory, realizedProfit } = get();
         const currentPrice = candles[currentIndex].close;
         
         if (wallet.holdings >= quantity) {
+           const revenue = currentPrice * quantity;
+           const profit = (currentPrice - wallet.avgPrice) * quantity;
+           
            const newWallet = {
              ...wallet,
-             cash: wallet.cash + (currentPrice * quantity),
+             cash: wallet.cash + revenue,
              holdings: wallet.holdings - quantity,
              // avgPrice remains same when selling
            };
@@ -141,6 +147,7 @@ export const useGameStore = create<GameState>()(
            set({
              wallet: newWallet,
              tradeHistory: [...tradeHistory, trade],
+             realizedProfit: realizedProfit + profit,
            });
         }
       },
@@ -152,6 +159,7 @@ export const useGameStore = create<GameState>()(
           tradeHistory: [],
           isPlaying: false,
           isGameOver: false,
+          realizedProfit: 0,
         });
       },
 

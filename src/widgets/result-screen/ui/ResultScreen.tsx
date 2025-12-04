@@ -1,9 +1,11 @@
 "use client";
 
+import React from 'react';
+
 import { useRouter } from "next/navigation";
-import { useGameStore } from "@/shared/hooks/useGameStore";
+import { useGameStore } from "@/entities/session/model/gameStore";
 import { Modal } from "@/shared/ui/Modal";
-import { GameResult } from "@/widgets/GameResult";
+import { GameResult } from "@/widgets/game-result";
 
 type ResultScreenProps = {
   isOpen: boolean;
@@ -18,17 +20,21 @@ type ResultScreenProps = {
 export const ResultScreen = ({ isOpen, onClose }: ResultScreenProps) => {
   const router = useRouter();
   const {
-    initialCash,
-    totalAssets,
-    profitRate,
-    trades,
-    resetGame,
+    wallet,
+    tradeHistory,
+    candles,
+    currentIndex,
+    actions: { resetGame }
   } = useGameStore();
 
+  const initialCash = 10000000; // Constant from store (INITIAL_WALLET)
+  const currentPrice = candles[currentIndex]?.close || 0;
+  const totalAssets = wallet.cash + (wallet.holdings * currentPrice);
   const profit = totalAssets - initialCash;
+  const profitRate = (profit / initialCash) * 100;
 
   const formatNumber = (num: number) => {
-    return num.toLocaleString();
+    return Math.floor(num).toLocaleString();
   };
 
   const formatPercent = (num: number) => {
@@ -52,6 +58,25 @@ export const ResultScreen = ({ isOpen, onClose }: ResultScreenProps) => {
     router.push("/");
   };
 
+  // Save trades when game ends
+  React.useEffect(() => {
+    if (isOpen && tradeHistory.length > 0) {
+      const saveTrades = async () => {
+        try {
+          await fetch('/api/trades', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tradeHistory),
+          });
+          console.log('Game trades saved successfully');
+        } catch (error) {
+          console.error('Failed to save game trades:', error);
+        }
+      };
+      saveTrades();
+    }
+  }, [isOpen, tradeHistory]);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} closeOnBackdrop={false}>
       <div className="bg-gray-900 text-white rounded-2xl shadow-2xl border-4 border-blue-500 overflow-hidden flex flex-col max-h-[90vh]">
@@ -59,7 +84,7 @@ export const ResultScreen = ({ isOpen, onClose }: ResultScreenProps) => {
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 sm:p-6 text-center flex-shrink-0">
           <div className="text-4xl sm:text-5xl mb-2">🎮</div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-1">게임 종료!</h1>
-          <p className="text-sm sm:text-base text-blue-100">50턴이 모두 끝났습니다</p>
+          <p className="text-sm sm:text-base text-blue-100">투자가 종료되었습니다</p>
         </div>
 
         <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
@@ -95,38 +120,40 @@ export const ResultScreen = ({ isOpen, onClose }: ResultScreenProps) => {
           </div>
 
           {/* 투자 성향 분석 */}
-          <GameResult trades={trades} />
+          <GameResult trades={tradeHistory} />
 
           {/* 거래 이력 */}
           <div className="bg-gray-800 rounded-xl p-4 sm:p-6 border-2 border-gray-700">
             <h2 className="text-lg sm:text-xl font-bold mb-3">📊 거래 이력</h2>
 
-            {trades.length === 0 ? (
+            {tradeHistory.length === 0 ? (
               <p className="text-gray-400 text-center py-6 text-sm">거래 이력이 없습니다</p>
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {trades.map((trade, index) => (
+                {tradeHistory.map((trade, index) => (
                   <div
                     key={index}
                     className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-gray-700 rounded-lg p-2 sm:p-3 hover:bg-gray-600 transition-colors gap-2"
                   >
                     <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                      <span className="text-gray-400 font-mono text-xs sm:text-sm">턴 {trade.turn}</span>
+                      <span className="text-gray-400 font-mono text-xs sm:text-sm">
+                        {new Date(trade.timestamp).toLocaleDateString()}
+                      </span>
                       <span
                         className={`font-semibold px-2 py-1 rounded text-xs sm:text-sm ${
-                          trade.type === "buy"
+                          trade.type === "BUY"
                             ? "bg-blue-500 text-white"
                             : "bg-red-500 text-white"
                         }`}
                       >
-                        {trade.type === "buy" ? "매수" : "매도"}
+                        {trade.type === "BUY" ? "매수" : "매도"}
                       </span>
                       <span className="font-mono text-xs sm:text-sm">
-                        {formatNumber(trade.shares)}주 @ {formatNumber(trade.price)}원
+                        {formatNumber(trade.volume)}주 @ {formatNumber(trade.price)}원
                       </span>
                     </div>
                     <span className="font-mono text-gray-300 font-semibold text-xs sm:text-sm">
-                      {formatNumber(trade.amount)}원
+                      {formatNumber(trade.price * trade.volume)}원
                     </span>
                   </div>
                 ))}

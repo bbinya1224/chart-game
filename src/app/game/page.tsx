@@ -1,5 +1,5 @@
-import { GameBoard } from "@/widgets/game-board";
+import { GamePage } from '@/views/game/ui/Page';
 
-export default function GamePage() {
-  return <GameBoard />;
+export default function Page() {
+  return <GamePage />;
 }

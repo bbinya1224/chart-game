@@ -1,6 +1,6 @@
 "use client";
 
-import { useGameStore } from "@/shared/hooks/useGameStore";
+import { useGameStore } from "@/entities/session/model/gameStore";
 import { GAME_CONSTANTS } from "@/shared/types/gameTypes";
 
 /**
@@ -10,14 +10,21 @@ import { GAME_CONSTANTS } from "@/shared/types/gameTypes";
  */
 export const ActionButtons = () => {
   const {
-    canBuy,
-    canSell,
-    isLastTurn,
-    currentPrice,
-    buyShares,
-    sellShares,
-    nextTurn,
+    wallet,
+    candles,
+    currentIndex,
+    isGameOver,
+    actions: { buy, sell, nextTick }
   } = useGameStore();
+
+  const currentPrice = candles[currentIndex]?.close || 0;
+  const canBuy = wallet.cash >= currentPrice * GAME_CONSTANTS.SHARES_PER_TRADE;
+  const canSell = wallet.holdings > 0;
+  const isLastTurn = currentIndex >= candles.length - 1 || isGameOver;
+
+  const buyShares = () => buy(GAME_CONSTANTS.SHARES_PER_TRADE);
+  const sellShares = () => sell(1);
+  const nextTurn = () => nextTick();
 
   const requiredCash = currentPrice * GAME_CONSTANTS.SHARES_PER_TRADE;
 

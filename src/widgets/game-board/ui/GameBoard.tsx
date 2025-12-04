@@ -1,6 +1,6 @@
 "use client";
 
-import { useGameStore } from "@/shared/hooks/useGameStore";
+import { useGameStore } from "@/entities/session/model/gameStore";
 import { ChartCanvas } from "@/features/chart";
 import { ActionButtons, StatusInfo } from "@/features/trading";
 import { ResultScreen } from "@/widgets/result-screen";
@@ -13,12 +13,16 @@ import { ResultScreen } from "@/widgets/result-screen";
  */
 export const GameBoard = () => {
   const {
-    currentTurn,
-    maxTurns,
-    currentPrice,
-    visibleCandleData,
+    currentIndex,
+    candles,
     isGameOver,
   } = useGameStore();
+
+  const currentTurn = currentIndex + 1;
+  const maxTurns = candles.length; // Or GAME_CONSTANTS.MAX_TURNS if fixed
+  const currentPrice = candles[currentIndex]?.close || 0;
+  // Show past 20 candles + current
+  const visibleCandleData = candles.slice(Math.max(0, currentIndex - 50), currentIndex + 1);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4 lg:p-8">

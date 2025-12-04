@@ -1,5 +1,5 @@
-import { ResultScreen } from "@/widgets/result-screen";
+import { ResultPage } from '@/views/result/ui/Page';
 
-export default function ResultPage() {
-  return <ResultScreen isOpen={true} />;
+export default function Page() {
+  return <ResultPage />;
 }

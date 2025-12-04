@@ -1,6 +1,6 @@
 "use client";
 
-import { useGameStore } from "@/shared/hooks/useGameStore";
+import { useGameStore } from "@/entities/session/model/gameStore";
 
 /**
  * 게임 상태 정보 컴포넌트
@@ -8,16 +8,25 @@ import { useGameStore } from "@/shared/hooks/useGameStore";
  */
 export const StatusInfo = () => {
   const {
-    cash,
-    shares,
-    entryPrice,
-    unrealizedProfit,
-    unrealizedProfitRate,
-    realizedProfit,
-    totalAssets,
-    profitRate,
-    initialCash,
+    wallet,
+    candles,
+    currentIndex,
+    realizedProfit
   } = useGameStore();
+
+  const currentPrice = candles[currentIndex]?.close || 0;
+  const cash = wallet.cash;
+  const shares = wallet.holdings;
+  const entryPrice = wallet.avgPrice;
+  const initialCash = 10000000; // Constant
+
+  const unrealizedProfit = shares > 0 ? (currentPrice - entryPrice) * shares : 0;
+  const unrealizedProfitRate = shares > 0 && entryPrice > 0 
+    ? ((currentPrice - entryPrice) / entryPrice) * 100 
+    : 0;
+  
+  const totalAssets = cash + (shares * currentPrice);
+  const profitRate = ((totalAssets - initialCash) / initialCash) * 100;
 
   const formatNumber = (num: number) => {
     return num.toLocaleString();

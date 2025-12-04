@@ -14,7 +14,7 @@ export const TradeStats: React.FC = () => {
   const winRate = totalTrades > 0 ? ((winningTrades / totalTrades) * 100).toFixed(1) : '0.0';
 
   const StatCard = ({ label, value, icon: Icon, color }: any) => (
-    <div className="flex items-center gap-4 rounded-xl bg-white/5 p-4 backdrop-blur-md border border-white/10 shadow-lg">
+    <div className="flex items-center gap-4 rounded-xl bg-white/5 p-4 backdrop-blur-md border border-white/10 shadow-lg flex-1">
       <div className={`rounded-full p-3 ${color} bg-opacity-20`}>
         <Icon size={20} className={color.replace('bg-', 'text-')} />
       </div>
@@ -26,7 +26,7 @@ export const TradeStats: React.FC = () => {
   );
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="flex flex-wrap gap-4">
       <StatCard
         label="Total Trades"
         value={totalTrades}
