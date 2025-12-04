@@ -1,12 +1,11 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/widgets/dashboard-header';
 import { TradeChart } from '@/widgets/trade-chart';
 import { TradeStats } from '@/widgets/trade-stats';
 import { GameResult } from '@/widgets/game-result';
-import { useTradeSync } from '@/features/dashboard/useTradeSync';
+import { useTradeSync } from '@/features/dashboard';
 import { Button } from '@/shared/ui/Button';
 
 export function HomePage() {

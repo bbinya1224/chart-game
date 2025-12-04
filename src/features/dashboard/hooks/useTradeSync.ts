@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { useTradeStore } from '@/entities/trade/model';
+import { useTradeStore } from '@/entities/trade';
 
 export const useTradeSync = (pollingInterval = 300000) => {
   const { setTrades, setLoading, setError, lastSyncTime } = useTradeStore();

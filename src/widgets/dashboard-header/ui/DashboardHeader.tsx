@@ -1,7 +1,7 @@
 import React from 'react';
 import { RefreshCw, Clock } from 'lucide-react';
 import { format } from 'date-fns';
-import { useTradeStore } from '@/entities/trade/model';
+import { useTradeStore } from '@/entities/trade';
 
 interface DashboardHeaderProps {
   onSync: () => void;

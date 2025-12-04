@@ -1,4 +1,4 @@
-import { Trade } from '../../../entities/trade/model';
+import { Trade } from '../../../entities/trade';
 import { EASignal } from '../model/types';
 
 export const mapSignalToTrade = (signal: EASignal): Trade => {

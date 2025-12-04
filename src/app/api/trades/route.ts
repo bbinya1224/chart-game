@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { mapSignalToTrade } from '../../../features/trade-receiver/lib/mapper';
-import { saveTrade, getTrades } from '../../../features/trade-receiver/lib/repository';
-import { EASignal } from '../../../features/trade-receiver/model/types';
+import { mapSignalToTrade, saveTrade, getTrades, EASignal } from '../../../features/trade-receiver';
 
 export async function POST(request: Request) {
   try {

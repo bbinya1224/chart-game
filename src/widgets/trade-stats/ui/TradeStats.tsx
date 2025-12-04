@@ -1,6 +1,6 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, Activity, DollarSign } from 'lucide-react';
-import { useTradeStore } from '@/entities/trade/model';
+import { useTradeStore } from '@/entities/trade';
 
 export const TradeStats: React.FC = () => {
   const { trades } = useTradeStore();

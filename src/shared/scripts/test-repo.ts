@@ -1,5 +1,5 @@
-import { saveTrade, getTrades } from '../../features/trade-receiver/lib/repository';
-import { Trade } from '../../entities/trade/model';
+import { saveTrade, getTrades } from '../../features/trade-receiver';
+import { Trade } from '../../entities/trade';
 
 // Mock the Trade type
 const mockTrade: Trade = {

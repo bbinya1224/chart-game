@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Brain, ShieldAlert, Zap, Hourglass } from 'lucide-react';
-import { useTradeStore } from '@/entities/trade/model';
-import { analyzeTrades, Persona } from '@/features/game/Analysis';
+import { useTradeStore } from '@/entities/trade';
+import { analyzeTrades, Persona } from '@/features/game';
 
 export interface GameResultProps {
   trades?: any[]; // Accept game trades

@@ -1,4 +1,4 @@
-import { Trade } from '@/entities/trade/model';
+import { Trade } from '@/entities/trade';
 
 export type Persona = 'Scalper' | 'Swing Trader' | 'Gambler' | 'HODLer' | 'Unknown';
 

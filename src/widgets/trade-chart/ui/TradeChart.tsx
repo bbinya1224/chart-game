@@ -12,7 +12,7 @@ import {
   ReferenceDot,
 } from 'recharts';
 import { format } from 'date-fns';
-import { useTradeStore } from '@/entities/trade/model';
+import { useTradeStore } from '@/entities/trade';
 
 export const TradeChart: React.FC = () => {
   const { trades } = useTradeStore();

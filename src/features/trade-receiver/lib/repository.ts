@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { Trade } from '../../../entities/trade/model';
+import { Trade } from '../../../entities/trade';
 
 const DB_PATH = path.join(process.cwd(), 'src/shared/db/trades.json');
 
