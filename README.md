@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chart Game & Trading Analysis Platform
 
-## Getting Started
+이 프로젝트는 사용자의 트레이딩 성향을 분석하는 게임과, 실제 MT4 트레이딩 내역을 연동하여 분석할 수 있는 대시보드 플랫폼입니다.
 
-First, run the development server:
+## 🚀 시작하기 (Getting Started)
 
+### 1. 설치 (Installation)
+프로젝트 루트 디렉토리에서 의존성을 설치합니다.
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. 실행 (Run)
+개발 서버를 실행합니다.
+```bash
+npm run dev
+```
+브라우저에서 `http://localhost:3000`으로 접속하여 확인합니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. MT4 연동 (선택 사항)
+시스템 트레이딩(EA) 신호를 연동하려면:
+1. `src/features/trade-receiver/ea/My_Strategy_EA.mq4` 파일을 MT4의 `Experts` 폴더에 복사하고 컴파일합니다.
+2. MT4 설정(`Tools` -> `Options` -> `Expert Advisors`)에서 `Allow WebRequest`를 켜고 `http://localhost:3000/api/trades`를 추가합니다.
+3. EA를 차트에 적용하면 자동으로 거래 내역이 웹 대시보드로 전송됩니다.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📂 주요 기능
+- **나만의 투자 전략 알아보기**: 모의 투자를 통해 나의 투자 성향(스캘퍼, 스윙 등)을 분석해줍니다.
+- **트레이딩 대시보드**: 내 매매 내역과 승률, 수익률 등을 시각적으로 보여줍니다.
+- **외부 연동**: MetaTrader 4(MT4)와 연동하여 자동매매 내역을 실시간으로 수집합니다.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠 기술 스택
+- **Next.js 14**
+- **TypeScript**
+- **Tailwind CSS**
+- **Zustand**
