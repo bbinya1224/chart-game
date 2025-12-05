@@ -1,5 +1,7 @@
 export interface EASignal {
   leader_account: string;
+  account_server?: string;
+  account_company?: string;
   signal_type: 'OPEN' | 'HEARTBEAT' | 'FLAT';
   ticket: string;
   symbol: string;
@@ -15,4 +17,10 @@ export interface EASignal {
   close_price?: number;
   close_time?: string;
   profit?: number;
+  // Account Snapshot
+  balance?: number;
+  equity?: number;
+  margin?: number;
+  free_margin?: number;
+  margin_level?: number;
 }

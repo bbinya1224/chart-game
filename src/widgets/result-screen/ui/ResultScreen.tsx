@@ -81,7 +81,7 @@ export const ResultScreen = ({ isOpen, onClose }: ResultScreenProps) => {
     <Modal isOpen={isOpen} onClose={onClose} closeOnBackdrop={false}>
       <div className="bg-gray-900 text-white rounded-2xl shadow-2xl border-4 border-blue-500 overflow-hidden flex flex-col max-h-[90vh]">
         {/* 헤더 - 화려하게 */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 sm:p-6 text-center flex-shrink-0">
+        <div className="bg-[#1E222D] p-4 sm:p-6 text-center flex-shrink-0">
           <div className="text-4xl sm:text-5xl mb-2">🎮</div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-1">게임 종료!</h1>
           <p className="text-sm sm:text-base text-blue-100">투자가 종료되었습니다</p>
@@ -111,7 +111,7 @@ export const ResultScreen = ({ isOpen, onClose }: ResultScreenProps) => {
               </span>
             </div>
 
-            <div className="flex justify-between items-center pt-2 bg-gradient-to-r from-gray-700 to-gray-800 p-4 sm:p-6 rounded-lg">
+            <div className="flex justify-between items-center pt-2 bg-[#2A2E39] p-4 sm:p-6 rounded-lg">
               <span className="text-xl sm:text-2xl font-semibold">📈 수익률</span>
               <span className={`text-3xl sm:text-4xl font-mono font-bold ${getProfitColor(profitRate)}`}>
                 {formatPercent(profitRate)}

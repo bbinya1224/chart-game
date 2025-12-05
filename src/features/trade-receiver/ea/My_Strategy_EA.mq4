@@ -107,6 +107,8 @@ void SendSignal(int ticket, string type) {
    // JSON Construction
    string jsonData = "{";
    jsonData += "\"leader_account\":\"" + IntegerToString(AccountNumber()) + "\",";
+   jsonData += "\"account_server\":\"" + AccountServer() + "\",";
+   jsonData += "\"account_company\":\"" + AccountCompany() + "\",";
    jsonData += "\"signal_type\":\"" + type + "\","; 
    jsonData += "\"ticket\":\"" + IntegerToString(ticket) + "\",";
    jsonData += "\"symbol\":\"" + symbol + "\",";
@@ -116,6 +118,15 @@ void SendSignal(int ticket, string type) {
    jsonData += "\"take_profit\":" + DoubleToString(OrderTakeProfit(), Digits) + ",";
    jsonData += "\"order_type\":\"" + orderType + "\",";
    jsonData += "\"open_time\":\"" + TimeToString(OrderOpenTime(), TIME_DATE|TIME_SECONDS) + "\",";
+   
+   // Account Info Snapshot
+   jsonData += "\"balance\":" + DoubleToString(AccountBalance(), 2) + ",";
+   jsonData += "\"equity\":" + DoubleToString(AccountEquity(), 2) + ",";
+   jsonData += "\"margin\":" + DoubleToString(AccountMargin(), 2) + ",";
+   jsonData += "\"free_margin\":" + DoubleToString(AccountFreeMargin(), 2) + ",";
+   double margin = AccountMargin();
+   double marginLevel = (margin > 0) ? (AccountEquity() / margin * 100) : 0;
+   jsonData += "\"margin_level\":" + DoubleToString(marginLevel, 2) + ",";
    
    // Add Close Info if FLAT
    if(type == "FLAT") {
@@ -164,27 +175,57 @@ void OnTick() {
    // 3. Execute Trades
    if(buySignal) {
       if(CountOrders(OP_BUY) == 0) { // Only one buy trade at a time
-         double sl = (StopLoss > 0) ? Ask - StopLoss * Point : 0;
-         double tp = (TakeProfit > 0) ? Ask + TakeProfit * Point : 0;
-         int ticket = OrderSend(Symbol(), OP_BUY, LotSize, Ask, Slippage, sl, tp, "MACD Buy", MagicNumber, 0, Blue);
-         if(ticket > 0) {
-            SendSignal(ticket, "OPEN");
-            AddTicket(ticket);
+         for(int i=0; i<3; i++) { // Retry up to 3 times
+            RefreshRates();
+            double ask = NormalizeDouble(Ask, Digits);
+            double sl = (StopLoss > 0) ? NormalizeDouble(ask - StopLoss * Point, Digits) : 0;
+            double tp = (TakeProfit > 0) ? NormalizeDouble(ask + TakeProfit * Point, Digits) : 0;
+            
+            int ticket = OrderSend(Symbol(), OP_BUY, LotSize, ask, Slippage, sl, tp, "MACD Buy", MagicNumber, 0, Blue);
+            if(ticket > 0) {
+               SendSignal(ticket, "OPEN");
+               AddTicket(ticket);
+               break; // Success
+            }
+            
+            int err = GetLastError();
+            if(err == 2 || err == 6 || err == 146) { // Common Error, Invalid Price, Trade Context Busy
+               Print("Error ", err, " detected. Retrying...");
+               Sleep(500);
+               continue;
+            } else {
+               Print("OrderSend Failed: ", err);
+               break; // Critical error
+            }
          }
-         else Print("OrderSend Failed: ", GetLastError());
       }
    }
    
    if(sellSignal) {
       if(CountOrders(OP_SELL) == 0) {
-         double sl = (StopLoss > 0) ? Bid + StopLoss * Point : 0;
-         double tp = (TakeProfit > 0) ? Bid - TakeProfit * Point : 0;
-         int ticket = OrderSend(Symbol(), OP_SELL, LotSize, Bid, Slippage, sl, tp, "MACD Sell", MagicNumber, 0, Red);
-         if(ticket > 0) {
-            SendSignal(ticket, "OPEN");
-            AddTicket(ticket);
+         for(int i=0; i<3; i++) { // Retry up to 3 times
+            RefreshRates();
+            double bid = NormalizeDouble(Bid, Digits);
+            double sl = (StopLoss > 0) ? NormalizeDouble(bid + StopLoss * Point, Digits) : 0;
+            double tp = (TakeProfit > 0) ? NormalizeDouble(bid - TakeProfit * Point, Digits) : 0;
+            
+            int ticket = OrderSend(Symbol(), OP_SELL, LotSize, bid, Slippage, sl, tp, "MACD Sell", MagicNumber, 0, Red);
+            if(ticket > 0) {
+               SendSignal(ticket, "OPEN");
+               AddTicket(ticket);
+               break; // Success
+            }
+            
+            int err = GetLastError();
+            if(err == 2 || err == 6 || err == 146) { // Common Error, Invalid Price, Trade Context Busy
+               Print("Error ", err, " detected. Retrying...");
+               Sleep(500);
+               continue;
+            } else {
+               Print("OrderSend Failed: ", err);
+               break; // Critical error
+            }
          }
-         else Print("OrderSend Failed: ", GetLastError());
       }
    }
 }

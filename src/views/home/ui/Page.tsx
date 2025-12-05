@@ -1,53 +1,97 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/widgets/dashboard-header';
-import { TradeChart } from '@/widgets/trade-chart';
 import { TradeStats } from '@/widgets/trade-stats';
+import { AssetSummary } from '@/widgets/asset-summary';
+import { OpenPositionsTable } from '@/widgets/open-positions';
+import { EquityCurveChart } from '@/widgets/equity-curve';
 import { GameResult } from '@/widgets/game-result';
+import { SimpleAssetCard } from '@/widgets/simple-asset-card';
+import { SafetyLight } from '@/widgets/safety-light';
+import { ActivityFeed } from '@/widgets/activity-feed';
 import { useTradeSync } from '@/features/dashboard';
 import { Button } from '@/shared/ui/Button';
+import { useTradeStore } from '@/entities/trade';
 
 export function HomePage() {
   const { sync } = useTradeSync();
+  const { trades } = useTradeStore();
+  const [isBeginnerMode, setIsBeginnerMode] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 font-sans">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-gray-950/80 backdrop-blur supports-[backdrop-filter]:bg-gray-950/60">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📊</span>
-            <span className="font-bold text-gray-100 tracking-tight">Quant Monitor</span>
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0B0E11] to-black text-gray-100 font-sans selection:bg-blue-500/30">
+      <div className="container mx-auto px-4 py-8 space-y-6">
+        
+        {/* Header Section */}
+        <DashboardHeader 
+          onSync={sync} 
+          isBeginnerMode={isBeginnerMode}
+          onToggleMode={() => setIsBeginnerMode(!isBeginnerMode)}
+        />
+
+        {isBeginnerMode ? (
+          // Beginner Mode Layout
+          <div className="space-y-6">
+            <section>
+              <SimpleAssetCard />
+            </section>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <section className="h-full">
+                <SafetyLight />
+              </section>
+              <section className="h-full">
+                <ActivityFeed />
+              </section>
+            </div>
           </div>
-          
+        ) : (
+          // Pro Mode Layout
+          <div className="space-y-6">
+            {/* Asset Summary Section */}
+            <section>
+              <AssetSummary />
+            </section>
+
+            {/* Stats Section */}
+            <section>
+              <TradeStats />
+            </section>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Equity Curve - Takes up 2 columns */}
+              <div className="lg:col-span-2">
+                <EquityCurveChart />
+              </div>
+
+              {/* Open Positions - Takes up 1 column */}
+              <div className="lg:col-span-1">
+                <OpenPositionsTable />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Game Result Section (if applicable) */}
+        {!isBeginnerMode && <GameResult trades={trades} />}
+
+        {/* Navigation Actions */}
+        <div className="flex justify-center gap-4 mt-12">
+          <Link href="/game">
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/20">
+              Start Trading Game
+            </Button>
+          </Link>
           <Link href="/find-my-strategy">
-            <Button 
-              variant="primary" 
-              size="md"
-              className="bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-900/20 transition-all hover:scale-105"
-            >
-              <span className="mr-2">🎮</span>
-              나만의 투자 전략 알아보기
+            <Button variant="secondary" size="lg" className="border-white/10 hover:bg-white/5">
+              Find My Strategy
             </Button>
           </Link>
         </div>
-      </header>
-
-      {/* Dashboard Content */}
-      <main className="mx-auto max-w-7xl p-6 space-y-6">
-        <DashboardHeader onSync={sync} />
-        
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            <TradeChart />
-          </div>
-          <div className="space-y-6">
-            <TradeStats />
-            <GameResult />
-          </div>
-        </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

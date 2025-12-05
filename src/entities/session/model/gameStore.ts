@@ -18,6 +18,7 @@ export interface TradeLog {
   price: number;
   volume: number;
   balanceAfter: number;
+  symbol?: string;
 }
 
 export interface Wallet {
@@ -111,6 +112,7 @@ export const useGameStore = create<GameState>()(
             price: currentPrice,
             volume: quantity,
             balanceAfter: newWallet.cash,
+            symbol: 'BTC/USD', // Default symbol for the game
           };
 
           set({
@@ -142,6 +144,7 @@ export const useGameStore = create<GameState>()(
             price: currentPrice,
             volume: quantity,
             balanceAfter: newWallet.cash,
+            symbol: 'BTC/USD', // Default symbol for the game
           };
 
            set({
